@@ -1,0 +1,23 @@
+.app {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 2rem auto 1rem;
+  grid-template-areas: 
+  "menu menu menu"
+  "villager offers recipe"
+  "output output output";
+  min-height: 100vh;
+}
+
+.menu-bar {
+  grid-area: menu;
+}
+.villager {
+  grid-area: villager;
+}
+.offers {
+  grid-area: offers;
+}
+.recipe {
+  grid-area: recipe;
+}
