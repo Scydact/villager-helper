@@ -1,23 +1,52 @@
 .app {
-  display: grid;
+  display              : grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 2rem auto 1rem;
-  grid-template-areas: 
-  "menu menu menu"
-  "villager offers recipe"
-  "output output output";
+  grid-template-rows   : 2rem auto auto;
+  grid-template-areas  :
+    "menu menu menu"
+    "villager offers recipe"
+    "output output output";
   min-height: 100vh;
 }
 
 .menu-bar {
   grid-area: menu;
 }
+
 .villager {
   grid-area: villager;
 }
+
 .offers {
   grid-area: offers;
 }
+
 .recipe {
   grid-area: recipe;
+}
+
+.villager,
+.offers,
+.recipe {
+  background   : gray;
+  border-radius: 1rem;
+  margin       : .5rem;
+  padding      : 1rem;
+}
+
+.villager {
+  display              : flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.villager-image {
+  height: 256px;
+}
+
+.villager-form {
+  display: grid;
+}
+.villager-form label {
+  margin-top: .5rem;
 }
