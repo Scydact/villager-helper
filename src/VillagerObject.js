@@ -1,32 +1,5 @@
 import { CONSTANTS, createId, toTitleCase } from "./Utils";
 
-let villagerObject = {
-    entity: {
-        customName: '',
-        level: 3,
-        xp: 250,
-        isXpRelatedToLevel: true,
-        profession: 'minecraft:something',
-        type: 'minecraft:something_else',
-    },
-    offers: [
-        {
-            // a trade option
-            rewardExp: true,
-            maxUses: 39029302,
-            uses: 0,
-            buy: { Count: 64, id: "diamond", tag: {} },
-            buyB: null,
-            sell: { Count: 1, id: "dirt", tag: {} },
-
-            xp: 892, //xp that the villager gets
-            priceMultiplier: 0, //multiplier of 'demand'
-            specialPrice: 0, //special modifier
-            demand: 0, // maybe ignore all these values if 0.
-        }
-    ]
-}
-
 export const VILLAGER = {
     professions: [
         'armorer',
@@ -127,6 +100,19 @@ export class Villager {
 
 }
 
+export class Item {
+    uuid = createId(); // used as the key for React lists
+
+    constructor(count = 1, id = "stone", tag = "") {
+        this.count = count;
+        this.id = id;
+        this.tag = tag;
+    }
+    clone() {
+        return new Item(this.count, this.id, this.tag);
+    }
+}
+
 export class Recipe {
     uuid = createId(); // used as the key for React lists
 
@@ -160,15 +146,3 @@ export class Recipe {
     }
 }
 
-export class Item {
-    uuid = createId(); // used as the key for React lists
-
-    constructor(count = 1, id = "stone", tag = "") {
-        this.count = count;
-        this.id = id;
-        this.tag = tag;
-    }
-    clone() {
-        return new Item(this.count, this.id, this.tag);
-    }
-}

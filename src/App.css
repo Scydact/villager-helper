@@ -10,8 +10,8 @@
 
 body {
   background-color: #222222;
-  font-family     : Minecraft, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  text-shadow     : .2em .2em black;
+  font-family     : Minecraftia, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-shadow     : 3px 3px black;
   color           : white;
 }
 
@@ -49,8 +49,8 @@ input[type=checkbox] {
 
 .mc-font {
   color      : white;
-  text-shadow: -.05em -.05em 5px rgba(0, 0, 0, 0.5), .13em .13em black;
-  font-family: Minecraft, Consolas, monospace;
+  text-shadow: -.05em -.05em 5px rgba(0, 0, 0, 0.5), 3px 3px black;
+  font-family: Minecraftia, Consolas, monospace;
 }
 
 .card {

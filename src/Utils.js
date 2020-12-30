@@ -1,5 +1,5 @@
 import * as mi from 'minecraft-items';
-import * as md from 'minecraft-data';
+import MinecraftData from 'minecraft-data';
 
 export function createId() {
     // Math.random should be unique because of its seeding algorithm.
@@ -31,8 +31,8 @@ export function toTitleCase(s) {
         .join(' ');
 }
 
-let versions = md.supportedVersions.pc;
-let mdlast = md(versions[versions.length-1]);
+let versions = MinecraftData.supportedVersions.pc;
+let mdlast = MinecraftData(versions[versions.length-1]);
 
 /** Finds item data from minecraft-data module. */
 export function findItemInfo(str) {
@@ -51,8 +51,4 @@ export function findItemIcon(name, isDisplayName = false) {
 export function findDisplayName(str) {
 
 }
-
-
-window.mi = mi;
-window.md = md;
 window.mdlast = mdlast;
