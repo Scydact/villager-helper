@@ -1,3 +1,6 @@
+import * as mi from 'minecraft-items';
+import * as md from 'minecraft-data';
+
 export function createId() {
     // Math.random should be unique because of its seeding algorithm.
     // Convert it to base 36 (numbers + letters), and grab the first 9 characters
@@ -27,3 +30,29 @@ export function toTitleCase(s) {
         .map(x => x.charAt(0).toUpperCase() + x.slice(1))
         .join(' ');
 }
+
+let versions = md.supportedVersions.pc;
+let mdlast = md(versions[versions.length-1]);
+
+/** Finds item data from minecraft-data module. */
+export function findItemInfo(str) {
+    let id = str.split(':').splice(-1);
+    return mdlast.findItemOrBlockByName(id);
+}
+/** Finds an item icon by its display name */
+export function findItemIcon(name, isDisplayName = false) {
+    if (!isDisplayName) {
+        let x = findItemInfo(name);
+        name = x ? x.displayName : name;
+    }
+    let x = mi.get(name);
+    return (x) ? x['icon'] : null;
+}
+export function findDisplayName(str) {
+
+}
+
+
+window.mi = mi;
+window.md = md;
+window.mdlast = mdlast;

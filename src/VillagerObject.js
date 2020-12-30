@@ -95,6 +95,9 @@ export class Villager {
         let oldIdx = this.offers.indexOf(recipe);
         if (oldIdx === -1) return false;
 
+        // index wraparound
+        index = (index + this.offers.length) % this.offers.length;
+
         let newOffers = this.offers.filter((x) => x !== recipe);
         newOffers.splice(index, 0, recipe);
         this.offers = newOffers;
@@ -108,6 +111,16 @@ export class Villager {
             if (recipe['uuid'] === uuid) return recipe;
         }
         return null;
+    }
+    /** Updates the old recipe with a new one */
+    updateRecipe(oldRecipe, newRecipe) {
+        let oldIdx = this.offers.indexOf(oldRecipe);
+        if (oldIdx === -1) return false;
+
+        let newOffers = [...this.offers];
+        newOffers[oldIdx] = newRecipe;
+        this.offers = newOffers;
+        return true;
     }
 
 
@@ -129,19 +142,33 @@ export class Recipe {
     }
 
     trades = {
-        buy: new Item(),
-        buyB: new Item(0),
-        sell: new Item(),
+        buy: new Item(1,'emerald'),
+        buyB: new Item(0,'air'),
+        sell: new Item(1,'paper'),
     }
+    clone() {
+        let x = new Recipe();
 
+        x.extraData = Object.assign({},this.extraData);
+        x.trades = {
+            buy: this.trades.buy.clone(),
+            buyB: this.trades.buyB.clone(),
+            sell: this.trades.sell.clone()
+        };
+
+        return x;
+    }
 }
 
 export class Item {
     uuid = createId(); // used as the key for React lists
 
-    constructor(count = 1, id = "minecraft:stone", tag = "") {
-        this.count = tag;
+    constructor(count = 1, id = "stone", tag = "") {
+        this.count = count;
         this.id = id;
-        this.tag = count;
+        this.tag = tag;
+    }
+    clone() {
+        return new Item(this.count, this.id, this.tag);
     }
 }
