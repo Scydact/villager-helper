@@ -21,7 +21,13 @@
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "env": {
+      "es2020": true,
+      "browser": true,
+      "node": true,
+      "mocha": true
+    }
   },
   "browserslist": {
     "production": [

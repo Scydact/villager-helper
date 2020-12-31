@@ -1,5 +1,4 @@
 import React from 'react';
-import * as vo from './VillagerObject';
 import { findItemIcon } from './Utils';
 
 export function ItemIcon(props) {

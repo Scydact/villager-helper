@@ -6,6 +6,7 @@ import { VillagerInfo } from './VillagerInfo';
 import { OffersInfo } from './OffersInfo';
 import { RecipeInfo } from './RecipeInfo';
 import * as vo from './VillagerObject';
+import { test } from './nbt_tests';
 
 class App extends React.Component {
 
@@ -136,6 +137,7 @@ class App extends React.Component {
 export default App;
 
 window.vo = vo;
+test();
 /**
  * To insert image from data:
  * <img src="data:image/png;base64, DATAHEREFROM.icon"/>
