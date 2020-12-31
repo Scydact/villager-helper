@@ -32,7 +32,16 @@ export class TagType {
         }
         throw new TypeError('Input not valid!');
     };
-    stringify = () => this.value.toString();
+    clone() {
+        return parse(this.stringify());
+    }
+    stringify() { return this.value.toString(); }
+    console = (name) => {
+        if (this.value instanceof TagType)
+            return this.value.console(name);
+        let n = (name) ? `${name} - ` : '';
+        console.log(`[ ${n}(${this.constructor.name}): ${this.stringify()} ]`);
+    }
     static parse = (str) => findAppropiateTagType(str).parse(str);
 }
 
@@ -43,7 +52,15 @@ class TagNumber extends TagType {
         this.RANGE = RANGE;
         this.set(v);
     };
-    stringify = () => this.value.toString() + this.SUFFIX;
+    stringify(options = STRINGIFY_PROFILES.default) {
+        let suffixCases = {
+            default: this.SUFFIX,
+            uppercase: this.SUFFIX.toUpperCase(),
+            lowercase: this.SUFFIX.toLowerCase(),
+            ommit: '',
+        }
+        return this.value.toString() + suffixCases[options.number_suffix];
+    }
     static parse = (str, Type, parser) => new Type(parser(str));
 }
 let intValidator = (v) => Number.isInteger(v);
@@ -55,6 +72,13 @@ let intParser = (parser, range) => {
         return x;
     }
 }
+let byteParser = (v) => {
+    if (v.toLowerCase() === 'true')
+        return 1;
+    if (v.toLowerCase() === 'false')
+        return 0;
+    return intParser(Number.parseInt, RANGES.TagByte)(v);
+}
 const RANGES = {
     TagByte: [-(2 ** 7), 2 ** 7 - 1],
     TagShort: [-(2 ** 15), 2 ** 15 - 1],
@@ -63,8 +87,27 @@ const RANGES = {
 }
 export class TagByte extends TagNumber {
     SUFFIX = 'b';
-    constructor(v) { super(v, intValidator, RANGES.TagByte) }
-    static parse = (str) => TagNumber.parse(str, TagByte, intParser(Number.parseInt, RANGES.TagByte));
+    isBoolean = false; /** Is true, will be stringified as true/false */
+    constructor(v, isBoolean = false) {
+        super(v, intValidator, RANGES.TagByte);
+        this.isBoolean = isBoolean;
+    }
+    stringify(options = STRINGIFY_PROFILES.default) {
+        if (this.isBoolean && (this.value === 0 || this.value === 1)) {
+            let cases = {
+                default: (this.value) ? 'true' : 'false',
+                uppercase: (this.value) ? 'TRUE' : 'FALSE',
+                lowercase: (this.value) ? 'true' : 'false',
+                ommit: (this.value) ? '1' : '0',
+            }
+            return cases[options.number_suffix];
+        }
+        return super.stringify(options);
+    }
+    static parse(str) {
+        let isBool = (str.toLowerCase() === 'true' || str.toLowerCase() === 'false');
+        return new TagByte(byteParser(str), isBool);
+    }
 }
 export class TagShort extends TagNumber {
     SUFFIX = 's';
@@ -95,7 +138,22 @@ export class TagDouble extends TagNumber {
 
 export class TagString extends TagType {
     constructor(v) { super(v, (v) => typeof v === 'string', (x) => x.toString()); };
-    stringify = () => JSON.stringify(this.value);
+    stringify = (options) => {
+        if (options.allow_unquoted_strings && isAllowedInUnquotedString(this.value))
+            return this.value;
+        if (options.allow_single_quote_strings) {
+            let single_quote = (this.value.match(/'/g) || []).length;
+            let double_quote = (this.value.match(/"/g) || []).length;
+            if (single_quote < double_quote || options.allow_single_quote_strings === 'always')
+                return "'" + JSON
+                    .stringify(this.value)
+                    .slice(1, -1)
+                    .replaceAll('\\"', '"')
+                    .replaceAll("'", "\\'")
+                    + "'";
+        }
+        return JSON.stringify(this.value);
+    }
     static parse = (str) => {
         if ((str[0] === '"' && str[str.length - 1] === '"') || (str[0] === '\'' && str[str.length - 1] === '\'')) {
             str = str.substring(1, str.length - 1);
@@ -116,7 +174,7 @@ let checkArraySingleType = function ([head, ...tail]) {
     return true;
 }
 export class TagList extends TagType {
-
+    STRINGIFY_TYPE_PREFIX = '';
     constructor(value, listType = TagType) {
         super();
         this._valueValidator = (v) => (v instanceof Array) && (v.length === 0 || v[0] instanceof this.listType) && checkArraySingleType(v);
@@ -167,7 +225,24 @@ export class TagList extends TagType {
         return this.value[index];
     }
     indexOf = (value) => this.value.indexOf(value);
-    stringify = () => `[${this.value.map(x => x.stringify()).join(', ')}]`;
+    stringify = (options = STRINGIFY_PROFILES.default) => {
+        let [firstPad, currentPad, lastPad] = paddingAdjust(options);
+        let newOptions = depthPlus(options);
+        let mapLamda = x => currentPad + x.stringify(newOptions);
+        return '[' + this.STRINGIFY_TYPE_PREFIX
+            + firstPad
+            + this.value
+                .map(mapLamda)
+                .join(options.entry_separator + firstPad)
+            + lastPad + ']';
+    }
+    console = (name) => {
+        let n = (name) ? `${name} - ` : '';
+        console.groupCollapsed(`[ ${n}(${this.constructor.name}): [] ]`);
+        for (let x of this.value)
+            x.console();
+        console.groupEnd();
+    }
     static parse(s) {
         let out = new TagList();
 
@@ -211,27 +286,27 @@ export class TagList extends TagType {
 }
 
 export class TagByteArray extends TagList {
+    STRINGIFY_TYPE_PREFIX = 'B;';
     constructor(value) {
         super(null, TagByte);
         this.set(value);
     }
-    stringify = () => `[B;${this.value.map(x => x.stringify()).join(', ')}]`;
     static parse = TagList.specialTypeParser(TagByteArray, TagByte);
 }
 export class TagIntArray extends TagList {
+    STRINGIFY_TYPE_PREFIX = 'I;';
     constructor(value) {
         super(null, TagInt);
         this.set(value);
     }
-    stringify = () => `[I;${this.value.map(x => x.stringify()).join(', ')}]`;
     static parse = TagList.specialTypeParser(TagIntArray, TagInt);
 }
 export class TagLongArray extends TagList {
+    STRINGIFY_TYPE_PREFIX = 'L;';
     constructor(value) {
         super(null, TagLong);
         this.set(value);
     }
-    stringify = () => `[L;${this.value.map(x => x.stringify()).join(', ')}]`;
     static parse = TagList.specialTypeParser(TagLongArray, TagLong);
 }
 
@@ -270,7 +345,26 @@ export class TagCompound extends TagType {
     }
     keys = () => Object.keys(this.value);
     values = () => Object.values(this.value);
-    stringify = () => `{${Object.entries(this.value).map(x => x[0] + ': ' + x[1].stringify()).join(', ')}}`;
+    entries = () => Object.entries(this.value);
+    stringify = (options = STRINGIFY_PROFILES.default) => {
+        let [firstPad, currentPad, lastPad] = paddingAdjust(options);
+        let newOptions = depthPlus(options);
+        let mapLamda = x => currentPad + x[0] + options.compound_separator + x[1].stringify(newOptions);
+        return '{'
+            + firstPad
+            + Object.entries(this.value)
+                .map(mapLamda)
+                .join(options.entry_separator + firstPad)
+            + lastPad + '}';
+    }
+    console = (name) => {
+        let n = (name) ? `${name} - ` : '';
+        console.groupCollapsed(`[ ${n}(${this.constructor.name}): {} ]`);
+        for (let x of this.entries()) {
+            x[1].console(x[0]);
+        }
+        console.groupEnd();
+    }
     static parse(s) {
         let out = new TagCompound();
         if (s[0] === '{' && s[s.length - 1] === '}') {
@@ -290,7 +384,8 @@ export class TagCompound extends TagType {
 
 //#region Stringifier
 export function stringify(element, opts = {}) {
-    if (element instanceof TagType) return element.stringify(opts);
+    let options = { ...STRINGIFY_PROFILES.default, ...opts };
+    if (element instanceof TagType) return element.stringify(options);
     return element.toString();
 }
 
@@ -397,59 +492,67 @@ function isAllowedInUnquotedString(str) {
 
 //#region Parser
 function findAppropiateTagType(s) {
-    if (s.Length === 0){
-        console.log(`NONE: ${s}`);
+    let DEBUG = false;
+    if (s.Length === 0) {
+        if (DEBUG) console.log(`NONE: ${s}`);
         return null;
-}
+    }
     // Compound tags
-    if (s[0] === '{' && s[s.length - 1] === '}'){
-        console.log(`COMPOUND: ${s}`);
+    if (s[0] === '{' && s[s.length - 1] === '}') {
+        if (DEBUG) console.log(`COMPOUND: ${s}`);
         return TagCompound;
-}
+    }
     // List tags
     if (s[0] === '[' && s[s.length - 1] === ']') {
         switch (s.substring(1, 3)) {
             case 'B;':
-                console.log(`BYTELIST: ${s}`);
+                if (DEBUG) console.log(`BYTELIST: ${s}`);
                 return TagByteArray;
             case 'I;':
-                console.log(`INTLIST: ${s}`);
+                if (DEBUG) console.log(`INTLIST: ${s}`);
                 return TagIntArray;
             case 'L;':
-                console.log(`LONG LIST: ${s}`);
+                if (DEBUG) console.log(`LONG LIST: ${s}`);
                 return TagLongArray;
             default:
-                console.log(`LIST: ${s}`);
+                if (DEBUG) console.log(`LIST: ${s}`);
                 return TagList;
         }
     }
+
+    // Boolean
+    if (s.toLowerCase() === 'true' || s.toLowerCase() === 'false') {
+        if (DEBUG) console.log(`BYTE: ${s}`);
+        return TagByte;
+    }
+
 
     // Numbers
     let isCharDigit = (c) => (c >= '0' && c <= '9');
     if (isCharDigit(s[0]) || s[0] === '-' || s[0] === '+') {
         let su = s.toUpperCase();
         let suLastChar = su[su.length - 1];
-        if (suLastChar === 'D' || s.includes('.')){
-            console.log(`DOUBLE: ${s}`);
+        if (suLastChar === 'D' || s.includes('.')) {
+            if (DEBUG) console.log(`DOUBLE: ${s}`);
             return TagDouble;
-        }else if (suLastChar === 'F'){
-            console.log(`FLOAT: ${s}`);
+        } else if (suLastChar === 'F') {
+            if (DEBUG) console.log(`FLOAT: ${s}`);
             return TagFloat;
-        }else if (suLastChar === 'B'){
-            console.log(`BYTE: ${s}`);
+        } else if (suLastChar === 'B') {
+            if (DEBUG) console.log(`BYTE: ${s}`);
             return TagByte;
-        }else if (suLastChar === 'L'){
-            console.log(`LONG: ${s}`);
+        } else if (suLastChar === 'L') {
+            if (DEBUG) console.log(`LONG: ${s}`);
             return TagLong;
-        }else {
+        } else {
             if (isCharDigit(suLastChar)) su = su.substring(0, su.length - 1);
             try {
                 let x = BigInt(su);
-                if (intParser(BigInt, RANGES.TagInt)(x) === x){
-                    console.log(`INT: ${s}`);
+                if (intParser(BigInt, RANGES.TagInt)(x) === x) {
+                    if (DEBUG) console.log(`INT: ${s}`);
                     return TagInt;
-                }else if (intParser(BigInt, RANGES.TagLong)(x) === x){
-                    console.log(`LONG: ${s}`);
+                } else if (intParser(BigInt, RANGES.TagLong)(x) === x) {
+                    if (DEBUG) console.log(`LONG: ${s}`);
                     return TagLong;
                 }// Number too large for 2**63? let it be a string.
             }
@@ -459,7 +562,7 @@ function findAppropiateTagType(s) {
     }
 
     // Everything else: string.
-    console.log(`STRING: ${s}`);
+    if (DEBUG) console.log(`STRING: ${s}`);
     return TagString;
 }
 
@@ -482,3 +585,65 @@ export function parse(str) {
 
 //#endregion
 
+//#region Options and Profiles
+/**
+ * Basic profiles:
+ * - default (2 space padding)
+ * - expanded (4 space padding)
+ * - lineal (no new lines)
+ * - compact (no padding or spaces).
+ * 
+ * Values:
+ * - compound_separator: Goes between key-value pairs (':').
+ * - entry_separator: Goes between list elements (', ').
+ * - depth_padding: If false, does not pad. 
+ * If a string (like ' ' or even ''), will apply newlines and pad each level.
+ * - number_suffix: Format of number suffixes (default, lower, upper, ommit).
+ * - current_depth: Initial pad depth (0).
+ * - allow_unquoted_strings: If a string is safe, quotes will be ommited.
+ * - allow_single_quote_strings: 
+ *   - If false, double quotes will always be used.
+ *   - If true, will check amount of single vs double quotes and, 
+ *     if there are more double quotes than single quotes, will use single quotes 
+ *     for that particular string.
+ *   - If 'always', will always use single quotes instead of double quotes.
+ */
+export let STRINGIFY_PROFILES = {
+    default: {
+        compound_separator: ': ',
+        entry_separator: ', ',
+        depth_padding: '  ',
+        number_suffix: 'default', // default, lower, upper, ommit
+        current_depth: 0,
+        allow_unquoted_strings: false,
+        allow_single_quote_strings: false, // true, false, 'always'
+    },
+}
+STRINGIFY_PROFILES.expanded = {
+    ...STRINGIFY_PROFILES.default,
+    depth_padding: '    ',
+}
+STRINGIFY_PROFILES.lineal = {
+    ...STRINGIFY_PROFILES.default,
+    depth_padding: false,
+}
+STRINGIFY_PROFILES.compact = {
+    ...STRINGIFY_PROFILES.default,
+    depth_padding: false,
+    compound_separator: ':',
+    entry_separator: ',',
+    number_suffix: 'ommit',
+    allow_unquoted_strings: true,
+    allow_single_quote_strings: true,
+}
+
+const paddingAdjust = (options) => {
+    let isPad = (options.depth_padding !== false);
+    let currentPad = (isPad) ? options.depth_padding.repeat(options.current_depth) : '';
+    let firstPad = (isPad) ? '\n' : '';
+    let lastPad = (isPad) ? firstPad + options.depth_padding.repeat(Math.max(options.current_depth - 1, 0)) : '';
+    return [firstPad, currentPad, lastPad];
+}
+const depthPlus = (options) => { return { ...options, current_depth: options.current_depth + 1 }; }
+
+//#endregion
