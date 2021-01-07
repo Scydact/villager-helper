@@ -4,7 +4,7 @@ import { ItemIcon } from './ItemIcon';
 export function ItemInfo(props) {
     return (
         <div className="item">
-            <ItemIcon itemId={props.data.id} itemCount={props.data.count} />
+            <ItemIcon item={props.data}/>
             <div>
                 <label>Id: </label>
                 <input

@@ -224,6 +224,10 @@ label {
 .item-icon-count-negative {
   color: crimson;
 }
+.item-lore ul {
+  list-style-type: none;
+  padding: 0;
+}
 
 /* Trade */
 .item {

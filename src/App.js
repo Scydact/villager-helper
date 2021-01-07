@@ -1,12 +1,15 @@
 import React from 'react';
 //import logo, { ReactComponent } from './logo.svg';
 import './App.css';
+import './mc-font-colors.css';
 import { MenuBar } from './MenuBar';
 import { VillagerInfo } from './VillagerInfo';
 import { OffersInfo } from './OffersInfo';
 import { RecipeInfo } from './RecipeInfo';
 import * as vo from './VillagerObject';
 import { test } from './nbt_tests';
+
+// TODO Allow import/export from/to sNBT
 
 class App extends React.Component {
 

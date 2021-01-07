@@ -138,7 +138,7 @@ export class TagDouble extends TagNumber {
 
 export class TagString extends TagType {
     constructor(v) { super(v, (v) => typeof v === 'string', (x) => x.toString()); };
-    stringify = (options) => {
+    stringify = (options = STRINGIFY_PROFILES.default) => {
         if (options.allow_unquoted_strings && isAllowedInUnquotedString(this.value))
             return this.value;
         if (options.allow_single_quote_strings) {
@@ -222,7 +222,20 @@ export class TagList extends TagType {
     }
     get = (index) => {
         if (index === undefined) return this.value;
+        if (index === '') return this;
         return this.value[index];
+    }
+    navigate(path) {
+        let dir = pathDeconstruct(path);
+        if (dir[0][0] !== '[' || dir[0][dir[0].length - 1] !== ']') return null; // this is a list
+        dir[0] = dir[0].slice(1,-1);
+
+        if (dir.length > 1) {
+            let x = this.get(parseInt(dir[0]));
+            if (x instanceof TagCompound || (x instanceof TagList && dir[1][0] === '[')) return x.navigate(dir.splice(1));
+        }
+        else if (dir.length === 1) return this.get(parseInt(dir[0]));
+        return null;
     }
     indexOf = (value) => this.value.indexOf(value);
     stringify = (options = STRINGIFY_PROFILES.default) => {
@@ -310,6 +323,35 @@ export class TagLongArray extends TagList {
     static parse = TagList.specialTypeParser(TagLongArray, TagLong);
 }
 
+function pathDeconstruct(path) {
+    if (path instanceof Array) return path;
+    if (typeof (path) === 'string') {
+        let out = [];
+        let currentPath = '';
+        for (let i = 0; i < path.length; ++i) {
+            const c = path[i];
+            if (c === '[') {
+                out.push(currentPath);
+                currentPath = '';
+
+                let j = findNextStr(i + 1, path, ']');
+                out.push(path.substring(i, j + 1));
+                i = j;
+                continue;
+            }
+            if (c === '.') {
+                out.push(currentPath);
+                currentPath = '';
+                continue;
+            }
+            currentPath += c;
+        }
+        out.push(currentPath);
+        return out.filter(x => x); // remove any stray '';
+    }
+    return [];
+}
+
 export class TagCompound extends TagType {
     constructor(v) {
         super();
@@ -339,9 +381,20 @@ export class TagCompound extends TagType {
         }
         return false;
     }
-    get = (index) => {
+    get(index) {
         if (index === undefined) return this.value;
+        if (index === '') return this;
         return this.value[index];
+    }
+    navigate(path) {
+        let dir = pathDeconstruct(path);
+        if (dir.length > 1) {
+            if (dir[0][0] === '[') return null; // this is not a list
+            let x = this.get(dir[0]);
+            if (x instanceof TagCompound || (x instanceof TagList && dir[1][0] === '[')) return x.navigate(dir.splice(1));
+        }
+        else if (dir.length === 1) return this.get(dir[0]);
+        return null;
     }
     keys = () => Object.keys(this.value);
     values = () => Object.values(this.value);
@@ -574,7 +627,7 @@ function parseValue(s) {
 export function parse(str) {
     /**
      * Trim unnecesary spaces.
-     * Determine main strin type
+     * Determine main string type
      * Separate keys and values
      * For each value, determine its value.
      */

@@ -1,4 +1,5 @@
-import { CONSTANTS, createId, toTitleCase } from "./Utils";
+import * as Utils from "./Utils";
+import * as NBT from "./sNBT";
 
 export const VILLAGER = {
     professions: [
@@ -28,8 +29,8 @@ export const VILLAGER = {
         'taiga',
     ],
     getVillagerImagePath: (biome, profession) => {
-        let b = (biome === 'snow') ? 'Snowy' : toTitleCase(biome);
-        let p = (profession === 'none') ? 'Villager_Base' : toTitleCase(profession);
+        let b = (biome === 'snow') ? 'Snowy' : Utils.toTitleCase(biome);
+        let p = (profession === 'none') ? 'Villager_Base' : Utils.toTitleCase(profession);
         return `./assets/villager_pics/${b}_${p}.png`
     },
 }
@@ -101,7 +102,7 @@ export class Villager {
 }
 
 export class Item {
-    uuid = createId(); // used as the key for React lists
+    uuid = Utils.createId(); // used as the key for React lists
 
     constructor(count = 1, id = "stone", tag = "") {
         this.count = count;
@@ -111,14 +112,43 @@ export class Item {
     clone() {
         return new Item(this.count, this.id, this.tag);
     }
+    getDisplayName() {
+        // TODO Conversion from JSON text format to React components...
+        // https://minecraft.gamepedia.com/Raw_JSON_text_format
+        // TODO: Add colored MC font styles 
+        try {
+            var tag = NBT.parse(this.tag);
+            if (tag && tag instanceof NBT.TagCompound) {
+                let x = tag.navigate('display.Name');
+                if (x && x instanceof NBT.TagString)
+                    return x.get();
+            }
+        }
+        catch {}
+        return Utils.findDisplayName(this.id); 
+    }
+    getIdWithNamespace() {return Utils.getItemIdWithNamespace(this.id); }
+    getIcon() {return Utils.findItemIcon(this.id); }
+    getLore() {
+        try {
+            var tag = NBT.parse(this.tag);
+            if (tag && tag instanceof NBT.TagCompound) {
+                let x = tag.navigate('display.Lore');
+                if (x && x instanceof NBT.TagList)
+                    return x.get().map(x => x.get().toString());
+            }
+        }
+        catch {}
+        return null;
+    }
 }
 
 export class Recipe {
-    uuid = createId(); // used as the key for React lists
+    uuid = Utils.createId(); // used as the key for React lists
 
     extraData = {
         rewardExp: false, // if this trade rewards exp to the player
-        maxUses: CONSTANTS.MAX_VALUE.INT,
+        maxUses: Utils.CONSTANTS.MAX_VALUE.INT,
         uses: 0,
 
         xp: 0, //xp that the villager gets

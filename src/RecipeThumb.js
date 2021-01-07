@@ -24,10 +24,10 @@ export function RecipeThumb(props) {
      */
     return (
         <li onClick={() => props.onClick(props.data)} className={`item-thumb ${props.className}`}>
-            <ItemIcon itemId={props.data.trades.buy.id} itemCount={props.data.trades.buy.count} />
+            <ItemIcon item={props.data.trades.buy} />
             {props.data.trades.buyB.count ? (<span className="item-thumb-sign mc-font">+</span>) : null}
-            {props.data.trades.buyB.count ? (<ItemIcon itemId={props.data.trades.buyB.id} itemCount={props.data.trades.buyB.count} />) : null}
-            <span className="item-thumb-sign mc-font">=</span><ItemIcon itemId={props.data.trades.sell.id} itemCount={props.data.trades.sell.count} />
+            {props.data.trades.buyB.count ? (<ItemIcon item={props.data.trades.buyB} />) : null}
+            <span className="item-thumb-sign mc-font">=</span><ItemIcon item={props.data.trades.sell} />
             {/* <span>R#{props.data.uuid}</span> */}
         </li>
     );

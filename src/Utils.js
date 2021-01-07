@@ -36,9 +36,10 @@ let mdlast = MinecraftData(versions[versions.length-1]);
 
 /** Finds item data from minecraft-data module. */
 export function findItemInfo(str) {
-    let id = str.split(':').splice(-1);
+    let id = str.replace('minecraft:','');
     return mdlast.findItemOrBlockByName(id);
 }
+export function removeNamespace(str) {return str.split(':').splice(-1).join('')}
 /** Finds an item icon by its display name */
 export function findItemIcon(name, isDisplayName = false) {
     if (!isDisplayName) {
@@ -49,6 +50,12 @@ export function findItemIcon(name, isDisplayName = false) {
     return (x) ? x['icon'] : null;
 }
 export function findDisplayName(str) {
-
+    let item = mdlast.findItemOrBlockByName(str);
+    if (item) return item.displayName;
+    return toTitleCase(removeNamespace(str).replaceAll('_',' '));
+}
+export function getItemIdWithNamespace(str) {
+    if (str.split(':').length > 1) return str.toLowerCase();
+    return 'minecraft:' + str.toLowerCase();
 }
 window.mdlast = mdlast;
