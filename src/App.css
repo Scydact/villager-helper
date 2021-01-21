@@ -21,8 +21,8 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight  : normal;
-  margin: .2em .1em .5em;
+  font-weight: normal;
+  margin     : .2em .1em .5em;
 }
 
 button,
@@ -34,7 +34,7 @@ select {
   border-radius: var(--br);
   padding      : .25em .5em;
   font-family  : inherit;
-  min-width: 20px;
+  min-width    : 20px;
 }
 
 button:hover {
@@ -43,8 +43,9 @@ button:hover {
 
 input[type=checkbox] {
   transform: scale(2);
-  margin: 10px;
-  filter: invert(1) hue-rotate(180deg);;
+  margin   : 10px;
+  filter   : invert(1) hue-rotate(180deg);
+  ;
 }
 
 .mc-font {
@@ -112,25 +113,47 @@ input[type=checkbox] {
 .villager {
   display       : flex;
   flex-direction: column;
+  align-items   : stretch;
+}
+
+
+.villager-image-wrapper {
+  position      : relative;
+  margin        : 0 1em;
+  display       : flex;
+  flex-direction: column;
   align-items   : center;
+  flex-grow     : 1;
+}
+
+.villager-image {
+  height: 256px;
+  filter: drop-shadow(.3em .3em .4em rgba(0, 0, 0, 0.4));
+}
+
+.villager-name {
+  position        : absolute;
+  top             : -.5em;
+  /* left         : 50%;
+  transform       : translate(-50%,0); */
+  background      : rgba(0, 0, 0, 0.5);
+  padding         : .4em .6em;
+  user-select     : none;
+  /* overflow-wrap: break-word; */
 }
 
 @media only screen and (min-width: 400px) and (max-width: 865px) {
   .villager {
     flex-direction : row;
-    justify-content: center;
+    justify-content: stretch;
+    align-items    : center;
   }
-}
-
-.villager-image {
-  height: 256px;
-  margin: 0 1em;
-  filter: drop-shadow(.3em .3em .4em rgba(0,0,0,0.4));
 }
 
 .form {
   display: grid;
 }
+
 .form-2header {
   grid-column: 1 / 3;
 }
@@ -224,9 +247,10 @@ label {
 .item-icon-count-negative {
   color: crimson;
 }
+
 .item-lore ul {
   list-style-type: none;
-  padding: 0;
+  padding        : 0;
 }
 
 /* Trade */

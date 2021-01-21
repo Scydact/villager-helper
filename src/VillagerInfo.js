@@ -1,17 +1,36 @@
 import React from 'react';
 import * as vo from './VillagerObject';
 import { toTitleCase } from './Utils';
+import { parseJsonText } from './jText-react';
 
 export class VillagerInfo extends React.Component {
     render() {
         let data = this.props.data;
         let onChange = this.props.onChange;
+
+        let customName = data.customName;
+        let villagerNameTag = null;
+        if (customName) {
+            try {
+                var obj = JSON.parse(customName);
+                villagerNameTag = (<div className="villager-name">{parseJsonText(obj)}</div>)
+
+            } catch (e) { 
+                //console.error(e); 
+                console.log('Failed to parse ' + customName);
+                villagerNameTag = (<div className="villager-name red">[Invalid JSON text!]</div>)
+            }
+        }
+
         return (
             <div className="villager card">
-                <img
-                    className="villager-image"
-                    src={vo.VILLAGER.getVillagerImagePath(data.type, data.profession)}
-                    alt={`Villager: ${data.type}_${data.profession}`} />
+                <div className="villager-image-wrapper">
+                    <img
+                        className="villager-image"
+                        src={vo.VILLAGER.getVillagerImagePath(data.type, data.profession)}
+                        alt={`Villager: ${data.type}_${data.profession}`} />
+                    {villagerNameTag}
+                </div>
 
                 <div className="villager-form form">
 

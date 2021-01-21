@@ -141,3 +141,16 @@
 .italic {
   font-style: italic;
 }
+
+.bold {
+  font-weight: bold;
+}
+
+.selector,
+.translate,
+.score {
+  background   : rgba(128, 128, 128, 0.2);
+  padding      : .2em;
+  margin       : .1em;
+  border-radius: .2em;
+}
